@@ -65,7 +65,7 @@ let util = {
         let hostPort = `${host}:${port}`;
 
         const srGetBody = {
-            "methods": ["GET"],
+            "methods": ["GET", "OPTIONS"],
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
@@ -89,7 +89,7 @@ let util = {
 
 
         const srAdminBody = {
-            "methods": ["POST", "PUT", "PATCH", "DELETE"],
+            "methods": ["POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {

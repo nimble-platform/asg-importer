@@ -91,8 +91,6 @@ const syncData = async SR_URL => {
                                     "regex_uri": [regex, regexReplace]
                                 },
                                 "openid-connect": {
-                                    "client_id": CLIENT_ID,
-                                    "client_secret": CLIENT_SECRET,
                                     "discovery": `${EFS_URL}/auth/realms/master/.well-known/openid-configuration`,
                                     "bearer_only": true,
                                     "realm": "master",

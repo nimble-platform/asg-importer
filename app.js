@@ -96,6 +96,8 @@ const syncData = async SR_URL => {
                                     "realm": "master",
                                     // "introspection_endpoint": `${EFS_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
                                     "token_signing_alg_values_expected": "RS256",
+                                    "client_id": CLIENT_ID,
+                                    "client_secret": CLIENT_SECRET,
                                     "public_key": PUBLIC_KEY
                                 }
                             },

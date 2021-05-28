@@ -44,92 +44,125 @@ const syncData = async SR_URL => {
         utils.createOrUpdateEcoEndpoint(asgJSON, EFS_URL, X_API_KEY);
         utils.createServiceRegistryEndpoint(SR_URL, EFS_URL, X_API_KEY);
         fillAvailableRoutes(asgJSON);
-
         // iterate through all the requests
-        let apis = srJSON.services;
+        let services = srJSON.services;
 
-        if (apis !== undefined) {
-            for (let i = 0; i < apis.length; i++) {
-                let rootAPI = apis[i];
-                for (let j = 0; j < rootAPI.apis.length; j++) {
+        if (services !== undefined) {
+            console.log("no.of services: " + services.length);
+            for (let i = 0; i < services.length; i++) {
+                let rootService = services[i];
+                console.log("iterating service : " + rootService.id);
+                console.log("no.of apis in service: " + rootService.apis.length);
+
+                for (let j = 0; j < rootService.apis.length; j++) {
 
                     try{
-                        let api = rootAPI.apis[j];
-                        let url = new URL(api.url);
+                        //meta.dataspine.createSecureProxy 
+                        let api = rootService.apis[j];
+                        console.log("the api : " + api.id + " : " + api.protocol + " : " + api.url + " meta: " );
 
-                        let host = url.hostname;
-                        let port = url.port;
-
-                        if(port === undefined || port === ""){
-                            if (url.protocol === "http:") {
-                                port = 80
-                            }else {
-                                port = 443
+                        let meta = api.meta;
+                        console.log(meta);
+                        let url = null;
+                        if(api.url != undefined && !api.url==""){
+                            url = new URL(api.url);
+                        }                        
+                        
+                            let host = url.hostname;
+                            let port = url.port;
+                            if(port === undefined || port === ""){
+                                if (url.protocol === "http:") {
+                                    port = 80
+                                }else {
+                                    port = 443
+                                }
                             }
-                        }
-                        let hostPort = `${host}:${port}`;
+                            let hostPort = `${host}:${port}`;
+    
+                            let prefix = rootService.id + "/" + rootService.apis[j].id;
+                            let matchingRoute = utils.getMatchingRoute(asgJSON, hostPort, prefix, url.pathname, ROOT_PREFIX);
+    
+                            if (matchingRoute === null) {
+                                matchingRoute = nextSlot(currentIncrement);
+                                currentIncrement += 5;
+                            }
+    
+                            let regexReplace = `${url.pathname}$1`;
+                            if (url.pathname === undefined || url.pathname === "") {
+                                regexReplace = `/$1`;
+                            }
+    
+                            let regex = `^/${ROOT_PREFIX}/${prefix}${url.pathname}(.*)`;
+                            let body = "";
+                            
+                            if(meta.dataspine != null && meta.dataspine.createSecureProxy !=null && meta.dataspine.createSecureProxy == false) {
+                                console.log("creating an unsecured proxy...");
+                                body = {
+                                    uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
+                                    plugins: {
+                                        "proxy-rewrite": {
+                                            "regex_uri": [regex, regexReplace]
+                                        }
+                                    },
+                                    upstream: {
+                                        "type": "roundrobin",
+                                        "nodes": {
+                                            [hostPort]: 1
+                                        }
+                                    }
+                                };
+                            } else {
+                                //creating a secured proxy 
+                                console.log("creating a secured proxy...");
+                                body = {
+                                    uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
+                                    plugins: {
+                                        "proxy-rewrite": {
+                                            "regex_uri": [regex, regexReplace]
+                                        },
+                                        "openid-connect": {
+                                            "discovery": `${EFS_URL}/auth/realms/master/.well-known/openid-configuration`,
+                                            "bearer_only": true,
+                                            "realm": "master",
+                                            // "introspection_endpoint": `${EFS_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
+                                            "token_signing_alg_values_expected": "RS256",
+                                            "client_id":"testClient",
+                                            "client_secret":"testSecret",
+                                            "public_key": PUBLIC_KEY
+                                        }
+                                    },
+                                    upstream: {
+                                        "type": "roundrobin",
+                                        "nodes": {
+                                            [hostPort]: 1
+                                        }
+                                    }
+                                };
 
-                        let prefix = rootAPI.id + "/" + rootAPI.apis[j].id;
-                        let matchingRoute = utils.getMatchingRoute(asgJSON, hostPort, prefix, url.pathname, ROOT_PREFIX);
-
-                        if (matchingRoute === null) {
-                            matchingRoute = nextSlot(currentIncrement);
-                            currentIncrement += 5;
-                        }
-
-                        let regexReplace = `${url.pathname}$1`;
-                        if (url.pathname === undefined || url.pathname === "") {
-                            regexReplace = `/$1`;
-                        }
-
-                        let regex = `^/${ROOT_PREFIX}/${prefix}${url.pathname}(.*)`;
-
-                        const body = {
-                            uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
-                            plugins: {
-                                "proxy-rewrite": {
-                                    "regex_uri": [regex, regexReplace]
+                            }                    
+    
+                            if (url.protocol === "https:") {
+                                body.plugins['proxy-rewrite']["scheme"] = "https"
+                            }
+    
+                            fetch(`${EFS_URL}/apisix/admin/routes/${matchingRoute}`, {
+                                method: 'PUT',
+                                body: JSON.stringify(body),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-API-KEY': X_API_KEY
                                 },
-                                "openid-connect": {
-                                    "discovery": `${EFS_URL}/auth/realms/master/.well-known/openid-configuration`,
-                                    "bearer_only": true,
-                                    "realm": "master",
-                                    // "introspection_endpoint": `${EFS_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
-                                    "token_signing_alg_values_expected": "RS256",
-                                    "client_id": CLIENT_ID,
-                                    "client_secret": CLIENT_SECRET,
-                                    "public_key": PUBLIC_KEY
-                                }
-                            },
-                            upstream: {
-                                "type": "roundrobin",
-                                "nodes": {
-                                    [hostPort]: 1
-                                }
-                            }
-                        };
-
-                        if (url.protocol === "https:") {
-                            body.plugins['proxy-rewrite']["scheme"] = "https"
-                        }
-
-                        fetch(`${EFS_URL}/apisix/admin/routes/${matchingRoute}`, {
-                            method: 'PUT',
-                            body: JSON.stringify(body),
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-API-KEY': X_API_KEY
-                            },
-                        })
-                            .then(res => {
-                                return res.json()
                             })
-                            .then(json => {
-                                console.log(`route_create request ${JSON.stringify(json)}`)
-                            })
-                            .catch((err) => {
-                                console.log(`error occurred while creating the route: ${JSON.stringify(err)}`)
-                            })
+                                .then(res => {
+                                    return res.json()
+                                })
+                                .then(json => {
+                                    console.log(`route_create request ${JSON.stringify(json)}`)
+                                })
+                                .catch((err) => {
+                                    console.log(`error occurred while creating the route: ${JSON.stringify(err)}`)
+                                })
+                                            
                     }catch (e) {
                         console.log(`error when parsing the routes: ${JSON.stringify(e)}`)
                     }

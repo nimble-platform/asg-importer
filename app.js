@@ -10,6 +10,7 @@ let CLIENT_SECRET = process.env.CLIENT_SECRET;
 let PUBLIC_KEY = process.env.PUBLIC_KEY;
 let ROOT_PREFIX = "apis";
 let SR_URL_CONTEXT_PATH = process.env.SR_URL_CONTEXT_PATH || "";
+let CRON_SCHEDULE = process.env.CRON_SCHEDULE || "0 */1 * * *";     // default: hourly
 
 let currentIncrement = 10;
 var availableRoutes = [];
@@ -181,6 +182,6 @@ const syncData = async SR_URL => {
 
 syncData(SR_URL);
 
-cron.schedule("0 */1 * * *", function() {
+cron.schedule(CRON_SCHEDULE, function() {
     syncData(SR_URL);
 });

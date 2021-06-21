@@ -46,10 +46,12 @@ let util = {
         return routeID;
     }),
 
-    createServiceRegistryEndpoint: ((SR_URL, efsURL, X_API_KEY) => {
+    createServiceRegistryEndpoint: ((SR_URL, efsURL, X_API_KEY, SR_URL_CONTEXT_PATH) => {
 
         let url_split = SR_URL;
-        url_split = url_split.split("/services/")[0];
+        if(SR_URL_CONTEXT_PATH !== "") {
+            url_split = url_split.split(SR_URL_CONTEXT_PATH)[0];
+        }
         let url = new URL(url_split);
 
         let host = url.hostname;
@@ -69,7 +71,7 @@ let util = {
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
-                    "regex_uri": ["^/apis/sr(.*)", "/services/$1"],
+                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
                     "scheme": "https"
                 },
                 "authz-keycloak": {
@@ -93,7 +95,7 @@ let util = {
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
-                    "regex_uri": ["^/apis/sr(.*)", "/services/$1"],
+                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
                     "scheme": "https"
                 },
                 "authz-keycloak": {

@@ -9,6 +9,7 @@ let CLIENT_ID = process.env.CLIENT_ID;
 let CLIENT_SECRET = process.env.CLIENT_SECRET;
 let PUBLIC_KEY = process.env.PUBLIC_KEY;
 let ROOT_PREFIX = "apis";
+let SR_URL_CONTEXT_PATH = process.env.SR_URL_CONTEXT_PATH || "";
 
 let currentIncrement = 10;
 var availableRoutes = [];
@@ -46,7 +47,7 @@ const syncData = async SR_URL => {
         const asgJSON = await asgResponse.json();
 
         utils.createOrUpdateEcoEndpoint(asgJSON, EFS_URL, X_API_KEY);
-        utils.createServiceRegistryEndpoint(SR_URL, EFS_URL, X_API_KEY);
+        utils.createServiceRegistryEndpoint(SR_URL, EFS_URL, X_API_KEY, SR_URL_CONTEXT_PATH);
         fillAvailableRoutes(asgJSON);
         // iterate through all the requests
         let services = srJSON.services;

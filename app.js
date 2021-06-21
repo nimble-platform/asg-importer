@@ -38,7 +38,11 @@ const syncData = async SR_URL => {
         const srResponse = await fetch(SR_URL);
         const srJSON = await srResponse.json();
 
-        const asgResponse = await fetch(`${EFS_URL}/apisix/admin/routes`);
+        const asgResponse = await fetch(`${EFS_URL}/apisix/admin/routes`,{
+            headers: {
+                'X-API-KEY': X_API_KEY
+            }
+        });
         const asgJSON = await asgResponse.json();
 
         utils.createOrUpdateEcoEndpoint(asgJSON, EFS_URL, X_API_KEY);

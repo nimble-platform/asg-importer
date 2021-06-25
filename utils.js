@@ -46,10 +46,12 @@ let util = {
         return routeID;
     }),
 
-    createServiceRegistryEndpoint: ((SR_URL, efsURL, X_API_KEY) => {
+    createServiceRegistryEndpoint: ((SR_URL, EFS_KEYCLOAK_URL, ASG_URL, X_API_KEY, SR_URL_CONTEXT_PATH) => {
 
         let url_split = SR_URL;
-        url_split = url_split.split("/services/")[0];
+        if(SR_URL_CONTEXT_PATH !== "") {
+            url_split = url_split.split(SR_URL_CONTEXT_PATH)[0];
+        }
         let url = new URL(url_split);
 
         let host = url.hostname;
@@ -69,11 +71,11 @@ let util = {
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
-                    "regex_uri": ["^/apis/sr(.*)", "/services/$1"],
+                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
                     "scheme": "https"
                 },
                 "authz-keycloak": {
-                    "token_endpoint": `${efsURL}/auth/realms/master/protocol/openid-connect/token`,
+                    "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
                     "permissions": ["service_registry#sr_view"],
                     "audience": "apisix",
                     "ssl_verify": false
@@ -93,11 +95,11 @@ let util = {
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
-                    "regex_uri": ["^/apis/sr(.*)", "/services/$1"],
+                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
                     "scheme": "https"
                 },
                 "authz-keycloak": {
-                    "token_endpoint": `${efsURL}/auth/realms/master/protocol/openid-connect/token`,
+                    "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
                     "permissions": ["service_registry#sr_admin"],
                     "audience": "apisix",
                     "ssl_verify": false
@@ -111,11 +113,11 @@ let util = {
             }
         };
 
-        apiRequest(`${efsURL}/apisix/admin/routes/2`, X_API_KEY, "PUT", srGetBody);
-        apiRequest(`${efsURL}/apisix/admin/routes/3`, X_API_KEY, "PUT", srAdminBody);
+        apiRequest(`${ASG_URL}/apisix/admin/routes/2`, X_API_KEY, "PUT", srGetBody);
+        apiRequest(`${ASG_URL}/apisix/admin/routes/3`, X_API_KEY, "PUT", srAdminBody);
     }),
 
-    createOrUpdateEcoEndpoint: ((asgJson, efsURL, X_API_KEY) => {
+    createOrUpdateEcoEndpoint: ((asgJson, asgURL, X_API_KEY) => {
         let routeExists = false;
         let nodes = asgJson.node.nodes;
         if (nodes !== undefined && nodes.length !== 0) {
@@ -145,7 +147,7 @@ let util = {
                 }
             };
 
-            apiRequest(`${efsURL}/apisix/admin/routes/1`, X_API_KEY, "PUT", body);
+            apiRequest(`${asgURL}/apisix/admin/routes/1`, X_API_KEY, "PUT", body);
         }
     })
 };

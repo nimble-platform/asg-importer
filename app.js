@@ -2,13 +2,16 @@ const fetch = require("node-fetch");
 const cron = require("node-cron");
 const utils = require("./utils");
 
-let SR_URL = process.env.SR_URL;
-let EFS_URL = process.env.EFS_URL;
-let X_API_KEY = process.env.X_API_KEY;
+let SR_URL = process.env.SR_URL;        // Base URL of the Service Registry (LinkSmart Service Catalog)
+let EFS_KEYCLOAK_URL = process.env.EFS_KEYCLOAK_URL;        // Base URL of the EFS Keycloak
+let ASG_URL = process.env.ASG_URL;      // Base URL of the API Security Gateway (Apache APISIX)
+let X_API_KEY = process.env.X_API_KEY;      // x-api-key for accessing APISIX's API
 let CLIENT_ID = process.env.CLIENT_ID;
 let CLIENT_SECRET = process.env.CLIENT_SECRET;
-let PUBLIC_KEY = process.env.PUBLIC_KEY;
+let PUBLIC_KEY = process.env.PUBLIC_KEY;    // Public key of the EFS Keycloak
 let ROOT_PREFIX = "apis";
+let SR_URL_CONTEXT_PATH = process.env.SR_URL_CONTEXT_PATH || "";
+let CRON_SCHEDULE = process.env.CRON_SCHEDULE || "0 */1 * * *";     // default: hourly
 
 let currentIncrement = 10;
 var availableRoutes = [];
@@ -38,11 +41,15 @@ const syncData = async SR_URL => {
         const srResponse = await fetch(SR_URL);
         const srJSON = await srResponse.json();
 
-        const asgResponse = await fetch(`${EFS_URL}/apisix/admin/routes`);
+        const asgResponse = await fetch(`${ASG_URL}/apisix/admin/routes`,{
+            headers: {
+                'X-API-KEY': X_API_KEY
+            }
+        });
         const asgJSON = await asgResponse.json();
 
-        utils.createOrUpdateEcoEndpoint(asgJSON, EFS_URL, X_API_KEY);
-        utils.createServiceRegistryEndpoint(SR_URL, EFS_URL, X_API_KEY);
+        utils.createOrUpdateEcoEndpoint(asgJSON, ASG_URL, X_API_KEY);
+        utils.createServiceRegistryEndpoint(SR_URL, EFS_KEYCLOAK_URL, ASG_URL, X_API_KEY, SR_URL_CONTEXT_PATH);
         fillAvailableRoutes(asgJSON);
         // iterate through all the requests
         let services = srJSON.services;
@@ -121,10 +128,10 @@ const syncData = async SR_URL => {
                                             "regex_uri": [regex, regexReplace]
                                         },
                                         "openid-connect": {
-                                            "discovery": `${EFS_URL}/auth/realms/master/.well-known/openid-configuration`,
+                                            "discovery": `${EFS_KEYCLOAK_URL}/auth/realms/master/.well-known/openid-configuration`,
                                             "bearer_only": true,
                                             "realm": "master",
-                                            // "introspection_endpoint": `${EFS_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
+                                            // "introspection_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
                                             "token_signing_alg_values_expected": "RS256",
                                             "client_id":"testClient",
                                             "client_secret":"testSecret",
@@ -145,7 +152,7 @@ const syncData = async SR_URL => {
                                 body.plugins['proxy-rewrite']["scheme"] = "https"
                             }
     
-                            fetch(`${EFS_URL}/apisix/admin/routes/${matchingRoute}`, {
+                            fetch(`${ASG_URL}/apisix/admin/routes/${matchingRoute}`, {
                                 method: 'PUT',
                                 body: JSON.stringify(body),
                                 headers: {
@@ -176,6 +183,6 @@ const syncData = async SR_URL => {
 
 syncData(SR_URL);
 
-cron.schedule("0 */1 * * *", function() {
+cron.schedule(CRON_SCHEDULE, function() {
     syncData(SR_URL);
 });

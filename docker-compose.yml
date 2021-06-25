@@ -5,9 +5,12 @@ services:
   asg-importer:
     image: nimbleplatform/asg-importer:latest
     environment:
-      EFS_URL:
       SR_URL:
+      SR_URL_CONTEXT_PATH:
+      ASG_URL:
       X_API_KEY:
+      CRON_SCHEDULE:
+      EFS_KEYCLOAK_URL:
       CLIENT_ID:
       CLIENT_SECRET:
       PUBLIC_KEY: |

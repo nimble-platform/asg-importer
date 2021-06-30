@@ -72,7 +72,7 @@ let util = {
             "plugins": {
                 "proxy-rewrite": {
                     "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
-                    "scheme": "https"
+                    "scheme": url.protocol === "http:" ? "http" : "https"
                 },
                 "authz-keycloak": {
                     "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
@@ -96,7 +96,7 @@ let util = {
             "plugins": {
                 "proxy-rewrite": {
                     "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
-                    "scheme": "https"
+                    "scheme": url.protocol === "http:" ? "http" : "https"
                 },
                 "authz-keycloak": {
                     "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,

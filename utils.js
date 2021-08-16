@@ -71,7 +71,7 @@ let util = {
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
-                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
+                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "$1"],
                     "scheme": url.protocol === "http:" ? "http" : "https"
                 },
                 "authz-keycloak": {
@@ -95,7 +95,7 @@ let util = {
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {
-                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "/$1"],
+                    "regex_uri": ["^/apis/sr(.*)", (SR_URL_CONTEXT_PATH === "" ? "" : "/" + SR_URL_CONTEXT_PATH)  + "$1"],
                     "scheme": url.protocol === "http:" ? "http" : "https"
                 },
                 "authz-keycloak": {

@@ -91,7 +91,7 @@ let util = {
 
 
         const srAdminBody = {
-            "methods": ["POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "methods": ["POST", "PUT", "PATCH", "DELETE", "GET", "OPTIONS"],
             "uri": "/apis/sr*",
             "plugins": {
                 "proxy-rewrite": {

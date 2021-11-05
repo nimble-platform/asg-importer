@@ -46,7 +46,7 @@ let util = {
         return routeID;
     }),
 
-    createServiceRegistryEndpoint: ((SR_URL, EFS_KEYCLOAK_URL, ASG_URL, X_API_KEY, SR_URL_CONTEXT_PATH) => {
+    createServiceRegistryEndpoint: ((SR_URL, EFS_KEYCLOAK_URL, EFS_KEYCLOAK_REALM, ASG_URL, X_API_KEY, SR_URL_CONTEXT_PATH) => {
 
         let url_split = SR_URL;
         if(SR_URL_CONTEXT_PATH !== "") {
@@ -75,7 +75,7 @@ let util = {
                     "scheme": url.protocol === "http:" ? "http" : "https"
                 },
                 "authz-keycloak": {
-                    "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
+                    "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/${EFS_KEYCLOAK_REALM}/protocol/openid-connect/token`,
                     "permissions": ["service_registry#sr_view"],
                     "audience": "apisix",
                     "ssl_verify": false
@@ -99,7 +99,7 @@ let util = {
                     "scheme": url.protocol === "http:" ? "http" : "https"
                 },
                 "authz-keycloak": {
-                    "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
+                    "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/${EFS_KEYCLOAK_REALM}/protocol/openid-connect/token`,
                     "permissions": ["service_registry#sr_admin"],
                     "audience": "apisix",
                     "ssl_verify": false

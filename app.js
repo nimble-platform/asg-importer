@@ -101,7 +101,8 @@ const syncData = async SR_URL => {
     
                             let regex = `^/${ROOT_PREFIX}/${prefix}${url.pathname}(.*)`;
                             let body = "";
-                            
+                            //let bodyRoute2 = "";
+
                             if(meta.dataspine != null && meta.dataspine.createSecureProxy !=null && meta.dataspine.createSecureProxy == false) {
                                 console.log("creating an unsecured proxy...");
                                 body = {
@@ -119,39 +120,89 @@ const syncData = async SR_URL => {
                                     }
                                 };
                             } else {
-                                //creating a secured proxy 
+                                //creating a secured proxy
                                 console.log("creating a secured proxy...");
-                                body = {
-                                    uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
-                                    plugins: {
-                                        "proxy-rewrite": {
-                                            "regex_uri": [regex, regexReplace]
-                                        },
-                                        "openid-connect": {
-                                            "discovery": `${EFS_KEYCLOAK_URL}/auth/realms/master/.well-known/openid-configuration`,
-                                            "bearer_only": true,
-                                            "realm": "master",
-                                            // "introspection_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
-                                            "token_signing_alg_values_expected": "RS256",
-                                            "client_id":"testClient",
-                                            "client_secret":"testSecret",
-                                            "public_key": PUBLIC_KEY
-                                        }
-                                    },
-                                    upstream: {
-                                        "type": "roundrobin",
-                                        "nodes": {
-                                            [hostPort]: 1
-                                        }
-                                    }
-                                };
 
-                            }                    
-    
+                                if(meta.dataspine != null && meta.dataspine.enableAuthZ !=null && meta.dataspine.enableAuthZ == true) {
+                                    // Currently only two authorization/access-levels are supported: (1) either a user has full, admin-level access (CRUD) to the API or (2) no access at all
+                                    // Three different access-levels can be supported easily in the future: (1) no access (2) view access (3) full, admin-level (CRUD) access
+                                    /*route1body = {
+                                        methods: ["GET", "OPTIONS"],
+                                        uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
+                                        plugins: {
+                                            "proxy-rewrite": {
+                                                "regex_uri": [regex, regexReplace]
+                                            },
+                                            "authz-keycloak": {
+                                                "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
+                                                "permissions": [rootService.id + "#" + rootService.apis[j].id + "_view"],    // "<resource_name>#<scope_name>"
+                                                "audience": "apisix",
+                                                "ssl_verify": false
+                                            }
+                                        },
+                                        upstream: {
+                                            "type": "roundrobin",
+                                            "nodes": {
+                                                [hostPort]: 1
+                                            }
+                                        }
+                                    };*/
+                                    // route2body
+                                    body = {
+                                        methods: ["POST", "PUT", "PATCH", "DELETE", "GET", "OPTIONS"],
+                                        uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
+                                        plugins: {
+                                            "proxy-rewrite": {
+                                                "regex_uri": [regex, regexReplace]
+                                            },
+                                            "authz-keycloak": {
+                                                "token_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token`,
+                                                "permissions": [rootService.id + "#" + rootService.apis[j].id + "_admin"],    // "<resource_name>#<scope_name>"
+                                                "audience": "apisix",
+                                                "ssl_verify": false
+                                            }
+                                        },
+                                        upstream: {
+                                            "type": "roundrobin",
+                                            "nodes": {
+                                                [hostPort]: 1
+                                            }
+                                        }
+                                    };
+                                }
+                                else {
+                                    body = {
+                                        uri: `/${ROOT_PREFIX}/${prefix}${url.pathname}*`,
+                                        plugins: {
+                                            "proxy-rewrite": {
+                                                "regex_uri": [regex, regexReplace]
+                                            },
+                                            "openid-connect": {
+                                                "discovery": `${EFS_KEYCLOAK_URL}/auth/realms/master/.well-known/openid-configuration`,
+                                                "bearer_only": true,
+                                                "realm": "master",
+                                                // "introspection_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/master/protocol/openid-connect/token/introspect`
+                                                "token_signing_alg_values_expected": "RS256",
+                                                "client_id":"testClient",
+                                                "client_secret":"testSecret",
+                                                "public_key": PUBLIC_KEY
+                                            }
+                                        },
+                                        upstream: {
+                                            "type": "roundrobin",
+                                            "nodes": {
+                                                [hostPort]: 1
+                                            }
+                                        }
+                                    };
+                                }
+
+                            }
+
                             if (url.protocol === "https:") {
                                 body.plugins['proxy-rewrite']["scheme"] = "https"
                             }
-    
+
                             fetch(`${ASG_URL}/apisix/admin/routes/${matchingRoute}`, {
                                 method: 'PUT',
                                 body: JSON.stringify(body),
@@ -169,7 +220,7 @@ const syncData = async SR_URL => {
                                 .catch((err) => {
                                     console.log(`error occurred while creating the route: ${JSON.stringify(err)}`)
                                 })
-                                            
+
                     }catch (e) {
                         console.log(`error when parsing the routes: ${JSON.stringify(e)}`)
                     }

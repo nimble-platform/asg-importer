@@ -181,7 +181,7 @@ const syncData = async SR_URL => {
                                             "openid-connect": {
                                                 "discovery": `${EFS_KEYCLOAK_URL}/auth/realms/${EFS_KEYCLOAK_REALM}/.well-known/openid-configuration`,
                                                 "bearer_only": true,
-                                                "realm": "master",
+                                                "realm": `${EFS_KEYCLOAK_REALM}`,
                                                 // "introspection_endpoint": `${EFS_KEYCLOAK_URL}/auth/realms/${EFS_KEYCLOAK_REALM}/protocol/openid-connect/token/introspect`
                                                 "token_signing_alg_values_expected": "RS256",
                                                 "client_id":"testClient",

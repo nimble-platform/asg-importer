@@ -7,6 +7,7 @@
 ### Configuration: Environment variables (ENVs)
 - SR_URL: Base URL of the Service Registry (SR). The URL that returns SR's index page which contains all the registered services. E.g., `http://www.example.com/services`.
 - EFS_KEYCLOAK_URL: Base URL of the EFS Keycloak. E.g., If the EFS Keycloak's OpenId Connect discovery URL is `http://www.example.com/auth/realms/master/.well-known/openid-configuration`, the EFS_KEYCLOAK_URL would be `http://www.example.com`.
+- EFS_KEYCLOAK_REALM: Name of the realm from EFS Keycloak
 - ASG_URL: Base URL of the API Security Gateway (ASG). E.g., If the ASG returns its routes on calling `http://www.example.com/apisix/admin/routes`, the ASG_URL would be `http://www.example.com`.
 - X_API_KEY: x-api-key for accessing ASG's API
 - CLIENT_ID: CLIENT_ID for the APISIX client in the EFS Keycloak
